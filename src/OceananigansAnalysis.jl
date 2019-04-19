@@ -1,6 +1,7 @@
 module OceananigansAnalysis
 
-export  parse_filename, load_grid, load_solution, simtime, simiter,
+export  parse_filename, num, name_without_num, load_grid, load_solution, 
+        sort_paths, simtime, simiter, augment_vars!,
         havg, means, fluctuations, maximum, minimum,
         makesquare, xzsliceplot, usecmbright,
         create_timeseries
@@ -35,8 +36,19 @@ function fluctuations(vars...)
     return (T(datas[i], vars[i].grid) for (i, T) in enumerate(types))
 end
 
+#=
+function turbulent_kinetic_energy(u, v, w)
+    nx, ny, nz = size(u)
+    e = zeros(nx, ny, nz)
+
+    for k in 1:nz, j=1:ny, i=1:nx
+        e[i, j, k] = avgxc2f(u.grid, u.data, i, j, k)^2 
+
+end
+=#
+
 function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
-    datapaths = glob(simname * "*.nc", dir)
+    datapaths = sort_paths(glob(simname * "*.nc", dir))
 
     if noutput == nothing
         noutput = length(datapaths) # not necessarily reliable...
@@ -50,13 +62,12 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
     end
 
     for datapath in datapaths
-        iter = simiter(simname, datapath, noutput)
-
+        iter = simiter(datapath, noutput; prefix=simname)
         u, v, w, θ, s = load_solution(datapath)
         U, V, W, T, S = means(u, v, w, θ, s)
 
         jldopen(timeseriespath, "a+") do file
-            file["timeseries/t/$iter"] = simtime(simname, datapath, noutput)
+            file["timeseries/t/$iter"] = simtime(datapath, noutput; prefix=simname)
             file["timeseries/U/$iter"] = U
             file["timeseries/V/$iter"] = V
             file["timeseries/T/$iter"] = T

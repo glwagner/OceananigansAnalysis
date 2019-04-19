@@ -1,42 +1,78 @@
-function parse_filename(simname, filepath)
+function parse_filename(filepath, varnames, vartypes=[Float64 for i=1:length(varnames)]; prefix=nothing)
     filename = basename(filepath)
-    filename = filename[length(simname)+2:end]
-
-    varnames = ["N", "Q", "dTdz", "k", "dt", "days"]
-
-    if simname == "wind_stress"
-        push!("tau", varnames)
+    
+    if prefix == nothing
+        iprefix = 1
+    else
+        prefixrange = findnext(prefix, filename, 1)
+        prefixrange == nothing && error("prefix $prefix not found in 
+                                        basename $filename associated with path $filepath")
+        iprefix = prefixrange[end]
     end
 
-    vartypes = cat([Int], [Float64 for i = 1:length(varnames)-1], dims=1)
     vars = Dict{String, Any}()
 
     for (i, v) in enumerate(varnames)
-        start = findnext(v, filename, 1)[end] + 1
+        start = findnext(v, filename, iprefix)[end] + 1
         finish = findnext("_", filename, start)[end] - 1
         vars[v] = parse.(vartypes[i], filename[start:finish])
     end
 
-    daysstart = findnext("days", filename, 1)[end] + 1
-    numstart = findnext("_", filename, daysstart)[end] + 1
-    numfinish = findnext(".", filename, numstart)[end] - 1
-
-    vars["num"] = parse(Int, filename[numstart:numfinish])
-    vars["Fb"] = buoyancy_flux(vars["Q"])
-    vars["dbdz"] = buoyancy_gradient(vars["dTdz"])
-    vars["tfinal"] = vars["days"] * 24 * 3600
+    vars["num"] = num(filepath)
 
     return vars
 end
 
-function simtime(simname, filepath, noutput)
-    vars = parse_filename(simname, filepath)
-    return vars["num"]/(noutput-1) * vars["tfinal"]
+"""
+    num(filepath)
+
+Return a number appended to the end of a filepath, such that
+
+<stuff>_num.<file_suffix>
+"""
+function num(filepath)
+    filename = basename(filepath)
+    numrange = findprev("_", filename, length(filename))
+
+    numrange == nothing && error("No underscore was found in $filepath")
+
+    numstart = numrange[end] + 1
+    numfinish = findnext(".", filename, numstart)[end] - 1
+    return parse(Int, filename[numstart:numfinish])
 end
 
-function simiter(simname, filepath, noutput)
-    vars = parse_filename(simname, filepath)
-    return Int(vars["num"]/(noutput-1) * vars["tfinal"] / vars["dt"])
+function name_without_num(filepath)
+    filename = basename(filepath)
+    numrange = findprev("_", filename, length(filename))
+    beforenum = numrange[1] - 1
+    numrange == nothing && error("No underscore was found in $filepath")
+    return filename[1:beforenum]
+end
+
+function sort_paths(filepaths)
+    nums = num.(filepaths)
+    ii = sortperm(nums)
+    return filepaths[ii]
+end
+
+function augment_vars!(vars)
+    vars["N"] = Int(vars["N"])
+    vars["Fb"] = buoyancy_flux(vars["Q"])
+    vars["dbdz"] = buoyancy_gradient(vars["dTdz"])
+    vars["tfinal"] = vars["days"] * 24 * 3600
+    return nothing
+end
+
+function simtime(filepath, noutput::Int; prefix=nothing)
+    vars = parse_filename(filepath, ["days"]; prefix=prefix)
+    tfinal = vars["days"] * 24 * 3600
+    return vars["num"]/noutput * tfinal
+end
+
+function simiter(filepath, noutput::Int; prefix=nothing)
+    vars = parse_filename(filepath, ["days", "dt"]; prefix=prefix)
+    tfinal = vars["days"] * 24 * 3600
+    return Int(vars["num"]/noutput * tfinal / vars["dt"])
 end
 
 
