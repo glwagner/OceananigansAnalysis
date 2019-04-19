@@ -54,6 +54,10 @@ end
 function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing, verbose=false)
     datapaths = sort_paths(glob(simname * "*.nc", dir))
 
+    if verbose
+        @info "    Creating a timeseries from the following data:\n $(("$d \n" for d in datapaths)...)"
+    end
+
     if noutput == nothing
         noutput = length(datapaths) # not necessarily reliable...
     end
