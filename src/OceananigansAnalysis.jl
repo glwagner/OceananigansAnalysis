@@ -35,7 +35,7 @@ function fluctuations(vars...)
     return (T(datas[i], vars[i].grid) for (i, T) in enumerate(types))
 end
 
-function create_timeseries(timeseriespath; name="", dir=".", noutput=nothing)
+function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
     datapaths = glob(name * "*.nc", dir)
 
     if noutput == nothing
