@@ -1,11 +1,13 @@
 module OceananigansAnalysis
 
 export  parse_filename, load_grid, load_solution, simtime, simiter,
-        havg, means, fluctuations, 
+        havg, means, fluctuations, maximum, minimum,
         makesquare, xzsliceplot,
         create_timeseries
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
+
+import Base: maximum, minimum
 
 # ρ₀ = 1027 kg/m³, cp = 4181.3 J/(kg·K), α = 2.07e-4 K⁻¹, g = 9.80665 m/s²
 const ρ₀ = 1027.0
@@ -24,6 +26,9 @@ havg(ϕ) = mean(ϕ, dims=(1, 2))
 havg(ϕ::Field) = mean(ϕ.data, dims=(1, 2))
 means(vars...) = (havg(v.data) for v in vars)
 
+maximum(ϕ::Field) = maximum(ϕ.data)
+minimum(ϕ::Field) = minimum(ϕ.data)
+
 function fluctuations(vars...)
     types = [typeof(v) for v in vars]
     datas = [v.data .- havg(v) for v in vars]
@@ -39,7 +44,7 @@ function create_timeseries(timeseriespath; name="", dir=".", noutput=nothing)
 
     grid = load_grid(datapaths[1])
 
-    jld2open(timeseriespath, "a+") do file
+    jldopen(timeseriespath, "a+") do file
         file["grid/N"] = grid.Nz
         file["grid/L"] = grid.Lz
     end
@@ -50,7 +55,7 @@ function create_timeseries(timeseriespath; name="", dir=".", noutput=nothing)
         u, v, w, θ, s = load_solution(datapath)
         U, V, W, T, S = means(u, v, w, θ, s)
 
-        jld2open(timeseriespath, "a+") do file
+        jldopen(timeseriespath, "a+") do file
             file["timeseries/t/$iter"] = simtime(simname, datapath)
             file["timeseries/U/$iter"] = U
             file["timeseries/V/$iter"] = V
