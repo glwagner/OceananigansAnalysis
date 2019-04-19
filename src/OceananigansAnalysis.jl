@@ -2,7 +2,7 @@ module OceananigansAnalysis
 
 export  parse_filename, load_grid, load_solution, simtime, simiter,
         havg, means, fluctuations, maximum, minimum,
-        makesquare, xzsliceplot,
+        makesquare, xzsliceplot, usecmbright,
         create_timeseries
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2

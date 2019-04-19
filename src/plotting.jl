@@ -16,3 +16,16 @@ xzsliceplot(ϕ::Field, slice=1; kwargs...) = pcolormesh(
 aspectratio(a, ax=gca(); adjustable="box") = ax.set_aspect(a, adjustable=adjustable)
 makesquare(ax=gca()) = aspectratio(1, ax)
 makesquare(axs::AbstractArray) = for ax in axs; makesquare(ax); end
+
+latexpreamble = """
+\\usepackage{cmbright}
+\\renewcommand{\\b}[1]    {\\boldsymbol{#1}}
+\\renewcommand{\\r}[1]    {\\mathrm{#1}}
+\\renewcommand{\\d}       {\\partial}
+"""
+
+function usecmbright()
+  rc("text.latex", preamble=latexpreamble)
+  rc("font", family="sans-serif")
+  nothing
+end
