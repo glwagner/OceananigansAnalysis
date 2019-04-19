@@ -36,7 +36,7 @@ function simtime(simname, filepath, noutput)
     return vars["num"]/(noutput-1) * vars["tfinal"]
 end
 
-function iter(simname, filepath)
+function iter(simname, filepath, noutput)
     vars = parse_filename(simname, filepath)
     return Int(vars["num"]/(noutput-1) * vars["tfinal"] / vars["dt"])
 end

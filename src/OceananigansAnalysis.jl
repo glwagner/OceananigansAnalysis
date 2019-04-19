@@ -1,6 +1,7 @@
 module OceananigansAnalysis
 
-export load_grid, load_solution, havg, means, fluctuations, create_timeseries
+export load_grid, load_solution, havg, means, fluctuations, create_timeseries,
+        parse_filename
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
 
