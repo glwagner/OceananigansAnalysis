@@ -50,13 +50,13 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
     end
 
     for datapath in datapaths
-        iter = simiter(simname, datapath)
+        iter = simiter(simname, datapath, noutput)
 
         u, v, w, θ, s = load_solution(datapath)
         U, V, W, T, S = means(u, v, w, θ, s)
 
         jldopen(timeseriespath, "a+") do file
-            file["timeseries/t/$iter"] = simtime(simname, datapath)
+            file["timeseries/t/$iter"] = simtime(simname, datapath, noutput)
             file["timeseries/U/$iter"] = U
             file["timeseries/V/$iter"] = V
             file["timeseries/T/$iter"] = T
