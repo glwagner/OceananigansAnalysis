@@ -1,5 +1,3 @@
-
-
 function parse_filename(simname, filepath)
     filename = basename(filepath)
     filename = filename[length(simname)+2:end]
@@ -70,12 +68,12 @@ end
 function load_solution(filepath)
     grid = load_grid(filepath)
 
-    u = FaceFieldX(ncread(filepaths[1], "u"), grid)
-    v = FaceFieldY(ncread(filepaths[1], "v"), grid)
-    w = FaceFieldZ(ncread(filepaths[1], "w"), grid)
+    u = FaceFieldX(ncread(filepath, "u"), grid)
+    v = FaceFieldY(ncread(filepath, "v"), grid)
+    w = FaceFieldZ(ncread(filepath, "w"), grid)
 
-    θ = CellField(ncread(filepaths[1], "T"), grid)
-    s = CellField(ncread(filepaths[1], "S"), grid)
+    θ = CellField(ncread(filepath, "T"), grid)
+    s = CellField(ncread(filepath, "S"), grid)
 
     return u, v, w, θ, s
 end
