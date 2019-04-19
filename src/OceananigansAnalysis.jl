@@ -1,6 +1,6 @@
 module OceananigansAnalysis
 
-export load_grid, load_solution, havg, means 
+export load_grid, load_solution, havg, means, fluctuations, create_timeseries
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
 
@@ -28,7 +28,7 @@ function fluctuations(vars...)
 end
 
 function create_timeseries(timeseries_filepath, simname, dir, noutput=nothing)
-    filepaths = glob(simname * "*.nc", ".")
+    filepaths = glob(simname * "*.nc", dir)
     grid = load_grid(simname, filepaths)
 
     if noutput == nothing
