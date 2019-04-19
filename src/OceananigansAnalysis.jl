@@ -2,8 +2,11 @@ module OceananigansAnalysis
 
 export  parse_filename, num, name_without_num, load_grid, load_solution, 
         sort_paths, simtime, simiter, augment_vars!,
+
         havg, means, fluctuations, maximum, minimum,
-        makesquare, xzsliceplot, usecmbright,
+
+        makesquare, xzsliceplot, usecmbright, removespines, cornerspines,
+
         create_timeseries
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
@@ -15,6 +18,7 @@ const ρ₀ = 1027.0
 const cP = 4181.3
 const α = 2.07e-4
 const g = 9.80665
+const f = 1e-4
 
 include("plotting.jl")
 include("parsing.jl")
@@ -54,11 +58,31 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
         noutput = length(datapaths) # not necessarily reliable...
     end
 
-    grid = load_grid(datapaths[1])
+    # Save simulation metadata
+    sample_datapath = datapaths[1]
+    grid = load_grid(sample_datapath)
+    vars = parse_filename(sample_datapath, ["N", "tau", "Q", "dTdz", "k", "dt", "days"])
+    augment_vars!(vars)
 
     jldopen(timeseriespath, "a+") do file
         file["grid/N"] = grid.Nz
         file["grid/L"] = grid.Lz
+    end
+
+    jldopen(timeseriespath, "a+") do file
+        file["boundary_conditions/Fb"] = vars["Fb"] 
+        file["boundary_conditions/Fu"] = vars["Fu"] 
+        file["initial_condition/Bz"] = vars["dbdz"]
+
+        file["timestepping/dt"] = vars["dt"]
+        file["timestepping/tfinal"] = vars["tfinal"]
+
+        file["constants/ρ₀"] = ρ₀
+        file["constants/cP"] = cP
+        file["constants/g"] = g
+        file["constants/α"] = α
+        file["constants/f"] = f
+        file["constants/κ"] = vars["k"]
     end
 
     for datapath in datapaths

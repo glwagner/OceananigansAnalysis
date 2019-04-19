@@ -57,6 +57,7 @@ end
 
 function augment_vars!(vars)
     vars["N"] = Int(vars["N"])
+    vars["Fu"] = velocity_flux(vars["tau"])
     vars["Fb"] = buoyancy_flux(vars["Q"])
     vars["dbdz"] = buoyancy_gradient(vars["dTdz"])
     vars["tfinal"] = vars["days"] * 24 * 3600
