@@ -55,7 +55,7 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
     datapaths = sort_paths(glob(simname * "*.nc", dir))
 
     if verbose
-        @info "    Creating a timeseries from the following data:\n $(("$d \n" for d in datapaths)...)"
+        @info "Creating a timeseries from the following data:\n $(("$d \n" for d in datapaths)...)"
     end
 
     if noutput == nothing
@@ -89,20 +89,26 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
         file["constants/κ"] = vars["k"]
     end
 
-    for datapath in datapaths
+    for (idata, datapath) in enumerate(datapaths)
         iter = simiter(datapath, noutput; prefix=simname)
            t = simtime(datapath, noutput; prefix=simname)
 
         if verbose
-            @info "    ... processing iteration $iter"
+            @info "Processing iteration $iter"
             t0 = time_ns()
         end
 
-        u, v, w, θ, s = load_solution(datapath)
+        # Conserve memory, or attempt to.
+        if idata == 1
+            u, v, w, θ, s = load_solution(datapath)
+        else
+            load_solution!(u, v, w, θ, s, datapath)
+        end
+
         U, V, W, T, S = means(u, v, w, θ, s)
 
         if verbose
-            @info "            processing took $((time_ns()-t0)*1e-3) μs. Saving..."
+            @info "... processing took $((time_ns()-t0)*1e-3) μs. Saving..."
             t0 = time_ns()
         end
 
@@ -115,7 +121,7 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
         end
 
         if verbose
-            @info "            saving took $((time_ns()-t0)*1e-3) μs."
+            @info "... and saving took $((time_ns()-t0)*1e-12) μs."
         end
     end
 

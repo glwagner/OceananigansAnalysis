@@ -115,3 +115,16 @@ function load_solution(filepath)
     return u, v, w, θ, s
 end
 
+
+function load_solution!(u, v, w, θ, s, filepath)
+    grid = load_grid(filepath)
+
+    ncread!(filepath, "u", u.data)
+    ncread!(filepath, "v", v.data)
+    ncread!(filepath, "w", w.data)
+    ncread!(filepath, "T", θ.data)
+    ncread!(filepath, "S", s.data)
+
+    return nothing
+end
+
