@@ -36,7 +36,7 @@ function fluctuations(vars...)
 end
 
 function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
-    datapaths = glob(name * "*.nc", dir)
+    datapaths = glob(simname * "*.nc", dir)
 
     if noutput == nothing
         noutput = length(datapaths) # not necessarily reliable...
