@@ -30,27 +30,28 @@ function fluctuations(vars...)
     return (T(datas[i], vars[i].grid) for (i, T) in enumerate(types))
 end
 
-function create_timeseries(filename, dir, simname, noutput=nothing)
-    filepaths = glob(simname * "*.nc", dir)
-    grid = load_grid(simname, filepaths)
+function create_timeseries(timeseriespath; name="", dir=".", noutput=nothing)
+    datapaths = glob(name * "*.nc", dir)
 
     if noutput == nothing
-        noutput = length(filepaths) # not necessarily reliable...
+        noutput = length(datapaths) # not necessarily reliable...
     end
 
-    filepath = joinpath(dir, filename)
+    grid = load_grid(datapaths[1])
 
-    jld2open(filepath, "a+") do file
+    jld2open(timeseriespath, "a+") do file
         file["grid/N"] = grid.Nz
         file["grid/L"] = grid.Lz
+    end
 
-        for path in filepaths
-            iteration = iter(simname, path)
+    for datapath in datapaths
+        iter = simiter(simname, datapath)
 
-            u, v, w, θ, s = load_solution(path)
-            U, V, W, T, S = means(u, v, w, θ, s)
+        u, v, w, θ, s = load_solution(datapath)
+        U, V, W, T, S = means(u, v, w, θ, s)
 
-            file["timeseries/t/$iter"] = iter
+        jld2open(timeseriespath, "a+") do file
+            file["timeseries/t/$iter"] = simtime(simname, datapath)
             file["timeseries/U/$iter"] = U
             file["timeseries/V/$iter"] = V
             file["timeseries/T/$iter"] = T
