@@ -51,7 +51,7 @@ function turbulent_kinetic_energy(u, v, w)
 end
 =#
 
-function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
+function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing, verbose=false)
     datapaths = sort_paths(glob(simname * "*.nc", dir))
 
     if noutput == nothing
@@ -87,15 +87,31 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing)
 
     for datapath in datapaths
         iter = simiter(datapath, noutput; prefix=simname)
+           t = simtime(datapath, noutput; prefix=simname)
+
+        if verbose
+            @info "    ... processing iteration $iter"
+            t0 = time_ns()
+        end
+
         u, v, w, θ, s = load_solution(datapath)
         U, V, W, T, S = means(u, v, w, θ, s)
 
+        if verbose
+            @info "            processing took $((time_ns()-t0)*1e-3) μs. Saving..."
+            t0 = time_ns()
+        end
+
         jldopen(timeseriespath, "a+") do file
-            file["timeseries/t/$iter"] = simtime(datapath, noutput; prefix=simname)
+            file["timeseries/t/$iter"] = t
             file["timeseries/U/$iter"] = U
             file["timeseries/V/$iter"] = V
             file["timeseries/T/$iter"] = T
             file["timeseries/S/$iter"] = S
+        end
+
+        if verbose
+            @info "            saving took $((time_ns()-t0)*1e-3) μs."
         end
     end
 
