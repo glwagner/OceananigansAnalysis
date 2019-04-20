@@ -1,13 +1,13 @@
 module OceananigansAnalysis
 
-export  parse_filename, num, name_without_num, load_grid, load_solution, 
-        sort_paths, simtime, simiter, augment_vars!,
+export parse_filename, num, name_without_num, load_grid, load_solution, 
+       load_solution!, sort_paths, simtime, simiter, augment_vars!,
 
-        havg, means, fluctuations, maximum, minimum,
+       havg, means, fluctuations, maximum, minimum,
 
-        makesquare, xzsliceplot, usecmbright, removespines, cornerspines,
+       makesquare, xzsliceplot, usecmbright, removespines, cornerspines,
 
-        create_timeseries
+       create_timeseries, iterations, times, getdata, getkappa, get_data_params
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
 
@@ -22,6 +22,7 @@ const f = 1e-4
 
 include("plotting.jl")
 include("parsing.jl")
+include("timeseries_analysis.jl")
 
 buoyancy_flux(Q) = -α * g * Q / (ρ₀ * cP)
 velocity_flux(wind_stress) = wind_stress / ρ₀
@@ -89,6 +90,9 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
         file["constants/κ"] = vars["k"]
     end
 
+    # Initialize.
+    u, v, w, θ, s = load_solution(datapaths[1])
+
     for (idata, datapath) in enumerate(datapaths)
         iter = simiter(datapath, noutput; prefix=simname)
            t = simtime(datapath, noutput; prefix=simname)
@@ -99,16 +103,12 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
         end
 
         # Conserve memory, or attempt to.
-        if idata == 1
-            u, v, w, θ, s = load_solution(datapath)
-        else
-            load_solution!(u, v, w, θ, s, datapath)
-        end
+        load_solution!(u, v, w, θ, s, datapath)
 
         U, V, W, T, S = means(u, v, w, θ, s)
 
         if verbose
-            @info "... processing took $((time_ns()-t0)*1e-3) μs. Saving..."
+            @info "... processing took $((time_ns()-t0)) s. Saving..."
             t0 = time_ns()
         end
 
@@ -121,7 +121,7 @@ function create_timeseries(timeseriespath; simname="", dir=".", noutput=nothing,
         end
 
         if verbose
-            @info "... and saving took $((time_ns()-t0)*1e-12) μs."
+            @info "... and saving took $((time_ns()-t0)) s."
         end
     end
 
