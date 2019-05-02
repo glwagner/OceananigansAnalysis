@@ -1,5 +1,7 @@
 import PyPlot: plot
 
+const allsides = ("top", "bottom", "left", "right")
+
 xnodes(ϕ::Field) = reshape(ϕ.grid.xC, ϕ.grid.Nx, 1, 1)
 ynodes(ϕ::Field) = reshape(ϕ.grid.yC, 1, ϕ.grid.Ny, 1)
 znodes(ϕ::Field) = reshape(ϕ.grid.zC, 1, 1, ϕ.grid.Nz)
@@ -8,14 +10,28 @@ xnodes(ϕ::FaceFieldX) = reshape(ϕ.grid.xF[1:end-1], ϕ.grid.Nx, 1, 1)
 ynodes(ϕ::FaceFieldY) = reshape(ϕ.grid.yF[1:end-1], 1, ϕ.grid.Ny, 1)
 znodes(ϕ::FaceFieldZ) = reshape(ϕ.grid.zF[1:end-1], 1, 1, ϕ.grid.Nz)
 
-xzsliceplot(ϕ::Field, slice=1; kwargs...) = pcolormesh(
-    repeat(dropdims(xnodes(ϕ), dims=2), 1, ϕ.grid.Nz),
-    repeat(dropdims(znodes(ϕ), dims=2), ϕ.grid.Nx, 1),
-    ϕ.data[slice, :, :]; kwargs...)
+zslice(ϕ) = repeat(dropdims(znodes(ϕ), dims=2), ϕ.grid.Nx, 1)
+xslice(ϕ) = repeat(dropdims(xnodes(ϕ), dims=2), 1, ϕ.grid.Nz)
 
+zhavg(ϕ::Field) = ϕ.grid.zC
+zhavg(ϕ::FaceFieldZ) = ϕ.grid.zF[1:end-1]
+havg1d(ϕ) = dropdims(mean(ϕ.data, dims=(1, 2)), dims=(1, 2))
+
+xzsliceplot(ϕ::Field, slice=1; kwargs...) = pcolormesh(xslice(ϕ), zslice(ϕ), ϕ.data[slice, :, :]; kwargs...)
+plot_havg(ϕ::Field, args...; kwargs...) = plot(havg1d(ϕ), zhavg(ϕ), args...; kwargs...)
+#
 aspectratio(a, ax=gca(); adjustable="box") = ax.set_aspect(a, adjustable=adjustable)
 makesquare(ax=gca()) = aspectratio(1, ax)
 makesquare(axs::AbstractArray) = for ax in axs; makesquare(ax); end
+
+function makesimple(axs)
+    for ax in axs
+        ax.set_aspect(1)
+        ax.tick_params(left=false, labelleft=false, bottom=false, labelbottom=false)
+        removespines(allsides..., ax=ax)
+    end
+    return nothing
+end
 
 latexpreamble = """
 \\usepackage{cmbright}
@@ -40,3 +56,99 @@ end
 
 removespines(sides...; ax=gca()) = for side in sides; removespine(side, ax); end
 cornerspines() = removespines("top", "right")
+
+function three_field_viz(fields...; seq=(false, true), clips=(0.5, 0.5))
+
+    fig, axs = subplots(ncols=3, figsize=(12, 4))
+
+    allsides = ("top", "bottom", "left", "right")
+
+    for ax in axs
+        ax.tick_params(left=false, labelleft=false, bottom=false, labelbottom=false)
+        sca(ax)
+        removespines(allsides...)
+    end
+
+    [makesquare(axs[i]) for i=1:2]
+
+    lims = []
+    cmaps = []
+    for (i, s) in enumerate(seq)
+        if s
+            push!(lims, [0, 1]*clips[i]*absmax(fields[i]))
+            push!(cmaps, "YlGnBu_r")
+
+        else
+            push!(lims, [-1, 1]*clips[i]*absmax(fields[i]))
+            push!(cmaps, "RdBu_r")
+        end
+    end
+
+    axs[1].tick_params(left=true, labelleft=true)
+    axs[3].tick_params(right=true, labelright=true)
+
+    for (i, ϕ) in enumerate(fields)
+        sca(axs[i])
+        xzsliceplot(ϕ, cmap=cmaps[i], vmin=lims[i][1], vmax=lims[i][2])
+        normalize!(ϕ)
+    end
+
+    axs[3].spines["bottom"].set_visible(true)
+    axs[3].spines["right"].set_visible(true)
+    axs[3].tick_params(labelbottom=true)
+
+    sca(axs[3])
+    for ϕ in fields
+        plot_havg(ϕ)
+    end
+
+    return fig, axs
+end
+
+function fluctuations_and_means(field1, field2, meanfields...; seq=(false, true),
+                                clipping=(0.5, 0.5), mean_names=["" for ϕ in meanfields])
+
+    fig, axs = subplots(ncols=3, figsize=(12, 4))
+
+    allsides = ("top", "bottom", "left", "right")
+
+    for ax in axs
+        ax.tick_params(left=false, labelleft=false, bottom=false, labelbottom=false)
+        sca(ax)
+        removespines(allsides...)
+    end
+
+    [makesquare(axs[i]) for i=1:2]
+
+    fields = [field1, field2]
+    lims, cmaps = [], []
+    for (i, s) in enumerate(seq)
+        if s
+            push!(lims, [0, 1]*clips[i]*absmax(fields[i]))
+            push!(cmaps, "YlGnBu_r")
+        else
+            push!(lims, [-1, 1]*clips[i]*absmax(fields[i]))
+            push!(cmaps, "RdBu_r")
+        end
+    end
+
+    axs[1].tick_params(left=true, labelleft=true)
+    axs[3].tick_params(right=true, labelright=true)
+
+    for (i, ϕ) in enumerate(fields)
+        sca(axs[i])
+        xzsliceplot(ϕ, cmap=cmaps[i], vmin=lims[i][1], vmax=lims[i][2])
+    end
+
+    axs[3].spines["bottom"].set_visible(true)
+    axs[3].spines["right"].set_visible(true)
+    axs[3].tick_params(labelbottom=true)
+
+    sca(axs[3])
+    for (i, ϕ) in enumerate(meanfields)
+        normalize!(ϕ)
+        plot_havg(ϕ, label=mean_names[i])
+    end
+
+    return fig, axs
+end

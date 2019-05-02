@@ -10,3 +10,9 @@ NetCDF = "30363a11-5582-574a-97bb-aa9a979735b9"
 Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
