@@ -15,6 +15,12 @@ function fluctuations(vars...)
     return (T(datas[i], vars[i].grid) for (i, T) in enumerate(types))
 end
 
+function fluctuation(v)
+    Field = typeof(v)
+    data = v.data .- havg(v)
+    return Field(data, v.grid)
+end
+
 function normalize!(ϕ::Field)
     ϕ.data .-= minimum(mean(ϕ.data, dims=(1, 2)))
     ϕ.data ./= maximum(mean(ϕ.data, dims=(1, 2)))

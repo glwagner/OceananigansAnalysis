@@ -10,8 +10,8 @@ export # misc constants
     get_data_params, makesquare, makesimple,
 
     # operations
-    logabs, absmax, havg, means, fluctuations, normalize!, kinetic_energy, dissipation,
-    NewField,
+    logabs, absmax, havg, means, fluctuation, fluctuations, normalize!, kinetic_energy,
+    dissipation, NewField,
 
     # plotting
     makesquare, xzsliceplot, usecmbright, removespines, cornerspines, plot_havg,
