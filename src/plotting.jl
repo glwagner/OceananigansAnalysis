@@ -2,6 +2,10 @@ import PyPlot: plot
 
 const allsides = ("top", "bottom", "left", "right")
 
+#
+# Helper functions
+#
+
 xnodes(ϕ::Field) = reshape(ϕ.grid.xC, ϕ.grid.Nx, 1, 1)
 ynodes(ϕ::Field) = reshape(ϕ.grid.yC, 1, ϕ.grid.Ny, 1)
 znodes(ϕ::Field) = reshape(ϕ.grid.zC, 1, 1, ϕ.grid.Nz)
@@ -10,16 +14,43 @@ xnodes(ϕ::FaceFieldX) = reshape(ϕ.grid.xF[1:end-1], ϕ.grid.Nx, 1, 1)
 ynodes(ϕ::FaceFieldY) = reshape(ϕ.grid.yF[1:end-1], 1, ϕ.grid.Ny, 1)
 znodes(ϕ::FaceFieldZ) = reshape(ϕ.grid.zF[1:end-1], 1, 1, ϕ.grid.Nz)
 
+nodes(ϕ) = (xnodes(ϕ), ynodes(ϕ), znodes(ϕ))
+
 zslice(ϕ) = repeat(dropdims(znodes(ϕ), dims=2), ϕ.grid.Nx, 1)
 xslice(ϕ) = repeat(dropdims(xnodes(ϕ), dims=2), 1, ϕ.grid.Nz)
 
-zhavg(ϕ::Field) = ϕ.grid.zC
-zhavg(ϕ::FaceFieldZ) = ϕ.grid.zF[1:end-1]
-havg1d(ϕ) = dropdims(mean(ϕ.data, dims=(1, 2)), dims=(1, 2))
+x3d(ϕ) = repeat(xnodes(ϕ), 1, ϕ.grid.Ny, ϕ.grid.Nz)
+y3d(ϕ) = repeat(ynodes(ϕ), ϕ.grid.Nx, 1, ϕ.grid.Nz)
+z3d(ϕ) = repeat(znodes(ϕ), ϕ.grid.Nx, ϕ.grid.Ny, 1)
 
-xzsliceplot(ϕ::Field, slice=1; kwargs...) = pcolormesh(xslice(ϕ), zslice(ϕ), ϕ.data[slice, :, :]; kwargs...)
-plot_havg(ϕ::Field, args...; kwargs...) = plot(havg1d(ϕ), zhavg(ϕ), args...; kwargs...)
 #
+# Plot types
+#
+
+plot_xzslice(ϕ, slice=1, args...; kwargs...) = 
+    pcolormesh(view(x3d(ϕ), :, slice, :), view(z3d(ϕ), :, slice, :), 
+               view(data(ϕ), :, slice, :), args...; kwargs...)
+
+plot_xyslice(ϕ, slice=1, args...; kwargs...) = 
+    pcolormesh(view(x3d(ϕ), :, :, slice), view(y3d(ϕ), :, :, slice), 
+               view(data(ϕ), :, :, slice), args...; kwargs...)
+
+function plot_hmean(ϕ, args...; normalize=false, kwargs...)
+    ϕhmean = dropdims(mean(data(ϕ), dims=(1, 2)), dims=(1, 2))
+    if !normalize
+        ϕnorm = 1
+    else
+        ϕmean = mean(data(ϕ))
+        ϕhmean = ϕhmean .- ϕmean
+        ϕnorm = maximum(ϕhmean) - minimum(ϕhmean)
+    end
+    PyPlot.plot(ϕhmean/ϕnorm, ϕ.grid.zC, args...; kwargs...)
+end
+
+#
+# Plot modifiers
+#
+
 aspectratio(a, ax=gca(); adjustable="box") = ax.set_aspect(a, adjustable=adjustable)
 makesquare(ax=gca()) = aspectratio(1, ax)
 makesquare(axs::AbstractArray) = for ax in axs; makesquare(ax); end

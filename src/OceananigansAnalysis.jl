@@ -9,17 +9,35 @@ export # misc constants
     diffusivity, create_timeseries, iterations, times, getdata, getkappa,
     get_data_params, makesquare, makesimple,
 
+    # convenience functions
+    set_ic!,
+
     # operations
-    logabs, absmax, havg, means, fluctuation, fluctuations, normalize!, kinetic_energy,
-    dissipation, NewField,
+    logabs, maxabs, havg, means, fluctuation, fluctuations, normalize!,
+    kinetic_energy, turbulent_kinetic_energy, dissipation, NewField,
+    Umax, Δmin, *,
 
     # plotting
-    makesquare, xzsliceplot, usecmbright, removespines, cornerspines, plot_havg,
+    makesquare, plot_xzslice, plot_hmean, usecmbright, removespines, cornerspines, plot_havg,
     three_field_viz, allsides
 
 using NetCDF, Glob, PyPlot, Oceananigans, Statistics, JLD2
 
 import Base: maximum, minimum, abs, *, /, log
+
+zerofunk(args...) = 0
+
+function set_ic!(model; ics...)
+    for (fld, ic) in ics 
+        if fld ∈ (:u, :v, :w)
+            ϕ = getproperty(model.velocities, fld)
+        else
+            ϕ = getproperty(model.tracers, fld)
+        end
+        data(ϕ) .= ic.(nodes(ϕ)...)
+    end
+    return nothing
+end
 
 # ρ₀ = 1027 kg/m³, cp = 4181.3 J/(kg·K), α = 2.07e-4 K⁻¹, g = 9.80665 m/s²
 const ρ₀ = 1027.0

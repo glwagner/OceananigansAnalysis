@@ -1,10 +1,10 @@
 # This file is machine-generated - editing it directly is not advised
 
 [[AbstractFFTs]]
-deps = ["LinearAlgebra", "Test"]
-git-tree-sha1 = "dfaf23dba016254bb0eed6de326510caea2889bf"
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "380e36c66edfa099cd90116b24c1ce8cafccac40"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
-version = "0.4.0"
+version = "0.4.1"
 
 [[Adapt]]
 deps = ["LinearAlgebra", "Test"]
@@ -47,9 +47,9 @@ version = "1.1.1"
 
 [[CMakeWrapper]]
 deps = ["BinDeps", "CMake", "Libdl", "Parameters", "Test"]
-git-tree-sha1 = "2b43d451639984e3571951cc687b8509b0a86c6d"
+git-tree-sha1 = "16d4acb3d37dc05b714977ffefa8890843dc8985"
 uuid = "d5fb7624-851a-54ee-a528-d3f3bac0b4a0"
-version = "0.2.2"
+version = "0.2.3"
 
 [[CSTParser]]
 deps = ["LibGit2", "Test", "Tokenize"]
@@ -65,15 +65,15 @@ version = "0.6.3"
 
 [[CUDAdrv]]
 deps = ["CUDAapi", "Libdl", "Printf"]
-git-tree-sha1 = "ac4ff4daf5d5c031ad52ae2b360a99dbd2a423ce"
+git-tree-sha1 = "9b2d99981b984378799ec70dd005cb7e7b4e914c"
 uuid = "c5f51814-7f29-56b8-a69c-e4d8f6be1fde"
-version = "3.0.0"
+version = "3.0.1"
 
 [[CUDAnative]]
 deps = ["Adapt", "CUDAapi", "CUDAdrv", "DataStructures", "InteractiveUtils", "LLVM", "Libdl", "Logging", "Pkg", "Printf", "TimerOutputs"]
-git-tree-sha1 = "b4f7ba69cece0a9dcfcbfc944ef33fe464256399"
+git-tree-sha1 = "5cfc4cf4cbadd59f0465669fdf3ef7366bedaa7c"
 uuid = "be33ccc6-a3ff-5ff2-a52e-74243cff1e17"
-version = "2.1.0"
+version = "2.1.1"
 
 [[Cassette]]
 deps = ["InteractiveUtils", "LinearAlgebra", "Test"]
@@ -88,10 +88,10 @@ uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
 version = "0.5.2"
 
 [[ColorTypes]]
-deps = ["FixedPointNumbers", "Random", "Test"]
-git-tree-sha1 = "f73b0e10f2a5756de7019818a41654686da06b09"
+deps = ["FixedPointNumbers", "Random"]
+git-tree-sha1 = "10050a24b09e8e41b951e9976b109871ce98d965"
 uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
-version = "0.7.5"
+version = "0.8.0"
 
 [[Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "InteractiveUtils", "Printf", "Reexport", "Test"]
@@ -161,15 +161,14 @@ version = "1.0.6"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Test"]
-git-tree-sha1 = "4c9269860074f5e9cf3f9078c49228bf13e4b33b"
+git-tree-sha1 = "537280935008196578bc24bb056ee1ac016d5530"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.6.1"
+version = "0.6.2"
 
 [[FixedPointNumbers]]
-deps = ["Test"]
-git-tree-sha1 = "b8045033701c3b10bf2324d7203404be7aef88ba"
+git-tree-sha1 = "d14a6fa5890ea3a7e5dcab6811114f132fec2b4b"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
-version = "0.5.3"
+version = "0.6.1"
 
 [[Formatting]]
 deps = ["Compat"]
@@ -184,10 +183,10 @@ uuid = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
 version = "0.7.0"
 
 [[GPUifyLoops]]
-deps = ["Cassette", "Pkg", "Requires", "StaticArrays", "Test"]
-git-tree-sha1 = "a905cb174c46d8c6c37587773230460af77c8b92"
+deps = ["Cassette", "Requires", "StaticArrays"]
+git-tree-sha1 = "c8177843e45b3b81676cc95fe48ca218c1f649ed"
 uuid = "ba82f77b-6841-5d2e-bd9f-4daf811aec27"
-version = "0.2.3"
+version = "0.2.4"
 
 [[Glob]]
 deps = ["Compat", "Test"]
@@ -236,10 +235,10 @@ uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.20.0"
 
 [[LLVM]]
-deps = ["InteractiveUtils", "Libdl", "Printf", "Test", "Unicode"]
-git-tree-sha1 = "d22678f75aca241f1e4b79093712aef264ad50fa"
+deps = ["Libdl", "Printf", "Unicode"]
+git-tree-sha1 = "7fafc370730b515a6273046a53cbb548ef3e38f7"
 uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "1.1.0"
+version = "1.1.1"
 
 [[LaTeXStrings]]
 deps = ["Compat"]
@@ -254,10 +253,10 @@ uuid = "1b4a561d-cfcb-5daf-8433-43fcf8b4bea3"
 version = "0.4.1"
 
 [[LibCURL]]
-deps = ["BinaryProvider", "Libdl", "Printf", "Test"]
-git-tree-sha1 = "d051c8057512ca38a273aaa514145a0b25f24d46"
+deps = ["BinaryProvider", "Libdl"]
+git-tree-sha1 = "5ee138c679fa202ebe211b2683d1eee2a87b3dbe"
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.5.0"
+version = "0.5.1"
 
 [[LibExpat]]
 deps = ["Compat"]
@@ -304,16 +303,16 @@ uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 version = "0.6.0"
 
 [[NetCDF]]
-deps = ["BinDeps", "CondaBinDeps", "Formatting", "Libdl", "Random", "Test"]
-git-tree-sha1 = "6497cb9cb80aa5b3bb6d05b21abc924cb0ca554c"
+deps = ["BinDeps", "CondaBinDeps", "Formatting", "Libdl"]
+git-tree-sha1 = "fce0c7962fb14b8cf2f33ea77885f3b7c7e1485e"
 uuid = "30363a11-5582-574a-97bb-aa9a979735b9"
-version = "0.7.3"
+version = "0.8.0"
 
 [[Oceananigans]]
-deps = ["CUDAapi", "CUDAdrv", "CUDAnative", "CuArrays", "Distributed", "FFTW", "GPUifyLoops", "JLD", "NNlib", "NetCDF", "Printf", "Random", "StaticArrays", "Statistics", "Test", "TimerOutputs"]
-git-tree-sha1 = "4d8a253240bcd660b961f7bb23d50fd1f9f252bf"
+deps = ["Adapt", "CUDAapi", "CUDAdrv", "CUDAnative", "CuArrays", "Distributed", "FFTW", "GPUifyLoops", "JLD", "LinearAlgebra", "NNlib", "NetCDF", "Printf", "Random", "StaticArrays", "Statistics", "Test", "TimerOutputs"]
+git-tree-sha1 = "2e5c6060c08538a00704590dd5cc9d9e38a14304"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
-version = "0.5.3"
+version = "0.5.4"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]

@@ -1,22 +1,65 @@
-using Oceananigans.Operators
+using 
+    Oceananigans,
+    Oceananigans.Operators,
+    Oceananigans.TurbulenceClosures
+
+import Oceananigans.TurbulenceClosures: ▶x_caa, ▶y_aca, ▶z_aac, ▶x_faa, ▶y_afa, ▶z_aaf
+
+▶x_caa(i, j, k, grid::Grid{T}, u::AbstractArray) where T = 
+    T(0.5) * (u[i+1, j, k] + u[i, j, k])
+
+▶y_aca(i, j, k, grid::Grid{T}, v::AbstractArray) where T = 
+    T(0.5) * (v[i, j+1, k] + v[i, j, k])
+
+function ▶z_aac(i, j, k, grid::Grid{T}, w::AbstractArray) where T
+    if k == grid.Nz
+        return T(0.5) * w[i, j, k]
+    else
+        return T(0.5) * (w[i, j, k+1] + w[i, j, k])
+    end
+end
+
+▶x_faa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T = 
+    T(0.5) * (ϕ[i, j, k] + ϕ[i-1, j, k])
+
+▶y_afa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T = 
+    T(0.5) * (ϕ[i, j, k] + ϕ[i, j-1, k])
+
+function ▶z_aaf(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T
+    if k == 1
+        return T(0.5) * ϕ[i, j, k]
+    else
+        return T(0.5) * (ϕ[i, j, k] + ϕ[i-1, j, k])
+    end
+end
 
 havg(ϕ) = mean(ϕ, dims=(1, 2))
-havg(ϕ::Field) = mean(ϕ.data, dims=(1, 2))
-means(vars...) = (havg(v.data) for v in vars)
+havg(ϕ::Field) = mean(data(ϕ), dims=(1, 2))
+means(vars...) = (havg(data(v)) for v in vars)
 
-maximum(ϕ::Field) = maximum(ϕ.data)
-minimum(ϕ::Field) = minimum(ϕ.data)
-abs(ϕ::Field) = abs.(ϕ.data)
-absmax(ϕ::Field) = maximum(abs(ϕ))
+maximum(ϕ::Field) = maximum(data(ϕ))
+minimum(ϕ::Field) = minimum(data(ϕ))
+abs(ϕ::Field) = abs.(data(ϕ))
+maxabs(ϕ::Field) = maximum(abs(ϕ))
+
+Umax(u, v, w) = max(maxabs(u), maxabs(v), maxabs(w))
+Umax(model) = Umax(model.velocities.u, model.velocities.v, model.velocities.w)
+
+Δmin(grid) = min(grid.Δx, grid.Δy, grid.Δz)
+
+fieldtype(::CellField) = CellField
+fieldtype(::FaceFieldX) = FaceFieldX
+fieldtype(::FaceFieldY) = FaceFieldY
+fieldtype(::FaceFieldZ) = FaceFieldZ
 
 function fluctuations(vars...)
-    types = [typeof(v) for v in vars]
+    types = [fieldtype(v) for v in vars]
     datas = [v.data .- havg(v) for v in vars]
     return (T(datas[i], vars[i].grid) for (i, T) in enumerate(types))
 end
 
 function fluctuation(v)
-    Field = typeof(v)
+    Field = fieldtype(v)
     data = v.data .- havg(v)
     return Field(data, v.grid)
 end
@@ -27,150 +70,54 @@ function normalize!(ϕ::Field)
     return nothing
 end
 
-@inline incmod1(a, n) = ifelse(a==n, 1, a + 1)
-@inline decmod1(a, n) = ifelse(a==1, n, a - 1)
+function *(u::FaceFieldX, ϕ::CellField)
+    uϕdata = zeros(size(data(u))...)
 
-#
-# Derivatives... easy case: parallel strain
-#
-
-∂x(u::FaceFieldX, i, j, k) = δx_f2c(u.grid, u, i, j, k) / u.grid.Δx
-∂y(v::FaceFieldY, i, j, k) = δy_f2c(v.grid, v, i, j, k) / v.grid.Δy
-∂z(w::FaceFieldZ, i, j, k) = δz_f2c(w.grid, w, i, j, k) / w.grid.Δz
-
-#
-# Derivatives: "edge cases" 😏: Vorticity
-#
-
-#=
-z
-^
-
-(i, k-1)   * ----- *  (i+1, k-1)
-           |       |
-           u       |
-           |       |
- (i, k)    * --w-- *   (i+1, k)
-
-=#
-
-function ∂x(w::FaceFieldZ, i, j, k)
-    if k == 1
-        return 0.25/w.grid.Δx * (δx_f2e(w.grid, w, i, j, k)   + δx_f2e(w.grid, w, incmod1(i, w.grid.Nz), j, k))
-    else
-        return 0.25/w.grid.Δx * (   δx_f2e(w.grid, w, i, j, k)   + δx_f2e(w.grid, w, incmod1(i, w.grid.Nz), j, k)
-                                  + δx_f2e(w.grid, w, i, j, k-1) + δx_f2e(w.grid, w, incmod1(i, w.grid.Nz), j, k-1) )
+    for k = 1:u.grid.Nz, j = 1:u.grid.Ny, i = 1:u.grid.Nx
+        @inbounds uϕdata[i, j, k] = ▶x_caa(i, j, k, u.grid, u.data) * ϕ[i, j, k]
     end
+    
+    return CellField(uϕdata, ϕ.grid)
 end
 
-function ∂z(u::FaceFieldX, i, j, k)
-    if k == 1
-        return 0.25/u.grid.Δz * (δz_f2e(u.grid, u, i, j, k)   + δz_f2e(u.grid, u, incmod1(i, u.grid.Nx), j, k))
-    else
-        return 0.25/u.grid.Δz * (   δz_f2e(u.grid, u, i, j, k)   + δz_f2e(u.grid, u, incmod1(i, u.grid.Nx), j, k)
-                                  + δz_f2e(u.grid, u, i, j, k-1) + δz_f2e(u.grid, u, incmod1(i, u.grid.Nx), j, k-1) )
+function *(v::FaceFieldY, ϕ::CellField)
+    vϕdata = zeros(size(v)...)
+
+    for k = 1:v.grid.Nz, j = 1:v.grid.Ny, i = 1:v.grid.Nx
+        @inbounds vϕdata[i, j, k] = ▶y_aca(i, j, k, v.grid, v.data) * ϕ[i, j, k]
     end
+    
+    return CellField(vϕdata, ϕ.grid)
 end
 
-#=
-z
-^
+function *(w::FaceFieldZ, ϕ::CellField)
+    wϕdata = zeros(size(data(w))...)
 
-(j, k-1)   * ----- *  (j+1, k-1)
-           |       |
-           v       |
-           |       |
- (j, k)    * --w-- *   (j+1, k)
-
-=#
-
-function ∂y(w::FaceFieldZ, i, j, k)
-    if k == 1
-        return 0.25/w.grid.Δy * (δy_f2e(w.grid, w, i, j, k)   + δy_f2e(w.grid, w, i, incmod1(j, w.grid.Ny), k))
-    else
-        return 0.25/w.grid.Δy * (   δy_f2e(w.grid, w, i, j, k)   + δy_f2e(w.grid, w, i, incmod1(j, w.grid.Ny), k)
-                                  + δy_f2e(w.grid, w, i, j, k-1) + δy_f2e(w.grid, w, i, incmod1(j, w.grid.Ny), k-1) )
+    for k = 1:w.grid.Nz, j = 1:w.grid.Ny, i = 1:w.grid.Nx
+        @inbounds wϕdata[i, j, k] = ▶z_aac(i, j, k, w.grid, w.data) * ϕ[i, j, k]
     end
+    
+    return CellField(wϕdata, ϕ.grid)
 end
 
-function ∂z(v::FaceFieldY, i, j, k)
-    if k == 1 # surface
-        return 0.25/v.grid.Δz * (δz_f2e(v.grid, v, i, j, k) + δz_f2e(v.grid, v, i, incmod1(j, v.grid.Ny), k))
-    else
-        return 0.25/v.grid.Δz * (   δz_f2e(v.grid, v, i, j, k)   + δz_f2e(v.grid, v, i, incmod1(j, v.grid.Ny), k)
-                                  + δz_f2e(v.grid, v, i, j, k-1) + δz_f2e(v.grid, v, i, incmod1(j, v.grid.Ny), k-1) )
-    end
-end
-
-
-#=
-y
-^
-
-(i, j+1)   * ----- *  (i+1, j+1)
-           |       |
-           u       |
-           |       |
- (i, j)    * --v-- *   (i+1, j)
-
-=#
-
-function ∂y(u::FaceFieldX, i, j, k)
-    return 0.25/u.grid.Δy * (   δy_f2e(u.grid, u, i, j, k)   + δy_f2e(u.grid, u, incmod1(i, u.grid.Nx), j, k)
-                              + δy_f2e(u.grid, u, i, incmod1(j, u.grid.Ny), k) + δy_f2e(u.grid, u, incmod1(i, u.grid.Nx), incmod1(j, u.grid.Ny), k) )
-end
-
-function ∂x(v::FaceFieldY, i, j, k)
-    return 0.25/v.grid.Δx * (   δx_f2e(v.grid, v, i, j, k)   + δx_f2e(v.grid, v, incmod1(i, v.grid.Nx), j, k)
-                              + δx_f2e(v.grid, v, i, incmod1(j, v.grid.Ny), k) + δx_f2e(v.grid, v, incmod1(i, v.grid.Nx), incmod1(j, v.grid.Ny), k) )
-end
+Base.@propagate_inbounds pow2(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
 function kinetic_energy(u, v, w)
-    edata = zeros(size(u))
-    nx, ny, nz = size(u)
 
-    for k = 1:nz, j = 1:ny, i = 1:nx
-        @inbounds begin
-            edata[i, j, k] = 0.25 * (  (u[i, j, k] + u[incmod1(i, nx), j, k])^2
-                                     + (v[i, j, k] + v[i, incmod1(j, ny), k])^2)
-            if k < nz
-                edata[i, j, k] += 0.25 * (w[i, j, k] + w[i, j, k+1])^2
-            else
-                edata[i, j, k] += 0.25 * w[i, j, k]^2
-            end
-        end
+    edata = zeros(size(u)...)
+
+    for k = 1:u.grid.Nz, j = 1:u.grid.Ny, i = 1:u.grid.Nx
+        @inbounds edata[i, j, k] = 0.5 * (
+              ▶x_caa(i, j, k, u.grid, pow2, u.data)
+            + ▶y_aca(i, j, k, u.grid, pow2, v.data)
+            + ▶z_aac(i, j, k, u.grid, pow2, w.data)
+           )
     end
 
     return CellField(edata, u.grid)
 end
 
-function dissipation(ν, u, v, w)
-    ϵ = zeros(size(u))
-    nx, ny, nz = size(u)
-
-    for k = 1:nz, j = 1:ny, i = 1:nx
-        @inbounds begin
-            ϵ[i, j, k] = ν * (
-                  ∂x(u, i, j, k)^2 + ∂y(u, i, j, k)^2 + ∂z(u, i, j, k)^2
-                + ∂x(v, i, j, k)^2 + ∂y(v, i, j, k)^2 + ∂z(v, i, j, k)^2
-                + ∂x(w, i, j, k)^2 + ∂y(w, i, j, k)^2 + ∂z(w, i, j, k)^2 )
-        end
-    end
-
-    return CellField(ϵ, u.grid)
-end
-
-function *(w::FaceFieldZ, c::CellField)
-    data = zeros(size(w))
-    nx, ny, nz = size(w)
-
-    for k = 1:nz, j = 1:ny, i = 1:nx
-        if k < nz
-            @inbounds data[i, j, k] = 0.5*(w[i, j, k] + w[i, j, k+1]) * c[i, j, k]
-        else # Use no-penetration condition which implies w=0 at bottom.
-            @inbounds data[i, j, k] = 0.5*w[i, j, k]*c[i, j, k]
-        end
-    end
-
-    return CellField(data, c.grid)
+function turbulent_kinetic_energy(model)
+    u′, v′, w′ = fluctuations(model.velocities.u, model.velocities.v, model.velocities.w)
+    return kinetic_energy(u′, v′, w′)
 end
