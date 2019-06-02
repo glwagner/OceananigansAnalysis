@@ -35,7 +35,7 @@ plot_xyslice(ϕ, slice=1, args...; kwargs...) =
     pcolormesh(view(x3d(ϕ), :, :, slice), view(y3d(ϕ), :, :, slice), 
                view(data(ϕ), :, :, slice), args...; kwargs...)
 
-function plot_hmean(ϕ, args...; normalize=false, kwargs...)
+function plot_hmean(f::Function, ϕ, args...; normalize=false, kwargs...)
     ϕhmean = dropdims(mean(data(ϕ), dims=(1, 2)), dims=(1, 2))
     if !normalize
         ϕnorm = 1
@@ -44,8 +44,11 @@ function plot_hmean(ϕ, args...; normalize=false, kwargs...)
         ϕhmean = ϕhmean .- ϕmean
         ϕnorm = maximum(ϕhmean) - minimum(ϕhmean)
     end
-    PyPlot.plot(ϕhmean/ϕnorm, ϕ.grid.zC, args...; kwargs...)
+    PyPlot.plot(f.(ϕhmean/ϕnorm), ϕ.grid.zC, args...; kwargs...)
 end
+
+plot_hmean(ϕ::Field, args...; kwargs...) =
+    plot_hmean(x->x, ϕ, args...; kwargs...)
 
 #
 # Plot modifiers
