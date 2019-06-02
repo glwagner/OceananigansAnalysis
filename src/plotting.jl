@@ -27,9 +27,11 @@ z3d(ϕ) = repeat(znodes(ϕ), ϕ.grid.Nx, ϕ.grid.Ny, 1)
 # Plot types
 #
 
-plot_xzslice(ϕ, slice=1, args...; kwargs...) = 
+plot_xzslice(f::Function, ϕ, args...; slice=1, kwargs...) = 
     pcolormesh(view(x3d(ϕ), :, slice, :), view(z3d(ϕ), :, slice, :), 
-               view(data(ϕ), :, slice, :), args...; kwargs...)
+               f.(view(data(ϕ), :, slice, :)), args...; kwargs...)
+
+plot_xzslice(ϕ::Field, args...; kwargs...) = plot_xzslice(x->x, ϕ, args...; kwargs...)
 
 plot_xyslice(ϕ, slice=1, args...; kwargs...) = 
     pcolormesh(view(x3d(ϕ), :, :, slice), view(y3d(ϕ), :, :, slice), 
