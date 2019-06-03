@@ -116,8 +116,12 @@ function kinetic_energy(u, v, w)
 
     return CellField(edata, u.grid)
 end
-
-function turbulent_kinetic_energy(model)
-    u′, v′, w′ = fluctuations(model.velocities.u, model.velocities.v, model.velocities.w)
+function turbulent_kinetic_energy(u, v, w)
+    u′, v′, w′ = fluctuations(u, v, w)
     return kinetic_energy(u′, v′, w′)
 end
+
+turbulent_kinetic_energy(model) = turbulent_kinetic_energy(model.velocities.u,
+                                                           model.velocities.v,
+                                                           model.velocities.w
+                                                          )
