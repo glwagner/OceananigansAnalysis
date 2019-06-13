@@ -122,5 +122,7 @@ function turbulent_kinetic_energy(u, v, w)
     return kinetic_energy(u′, v′, w′)
 end
 
-turbulent_kinetic_energy(model) =
-    turbulent_kinetic_energy(model.velocities.u, model.velocities.v, model.velocities.w)
+turbulent_kinetic_energy(model) = turbulent_kinetic_energy(model.velocities.u,
+                                                           model.velocities.v,
+                                                           model.velocities.w
+                                                          )
