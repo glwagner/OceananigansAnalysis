@@ -9,9 +9,6 @@ export # misc constants
     diffusivity, create_timeseries, iterations, times, getdata, getkappa,
     get_data_params, makesquare, makesimple,
 
-    # convenience functions
-    set_ic!,
-
     # operations
     logabs, maxabs, havg, means, fluctuation, fluctuations, normalize!,
     kinetic_energy, turbulent_kinetic_energy, dissipation, NewField,
@@ -28,7 +25,7 @@ import Base: maximum, minimum, abs, *, /, log
 zerofunk(args...) = 0
 
 function set_ic!(model; ics...)
-    for (fld, ic) in ics 
+    for (fld, ic) in ics
         if fld ∈ (:u, :v, :w)
             ϕ = getproperty(model.velocities, fld)
         else

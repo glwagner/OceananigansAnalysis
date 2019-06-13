@@ -1,14 +1,14 @@
-using 
+using
     Oceananigans,
     Oceananigans.Operators,
     Oceananigans.TurbulenceClosures
 
 import Oceananigans.TurbulenceClosures: ▶x_caa, ▶y_aca, ▶z_aac, ▶x_faa, ▶y_afa, ▶z_aaf
 
-▶x_caa(i, j, k, grid::Grid{T}, u::AbstractArray) where T = 
+▶x_caa(i, j, k, grid::Grid{T}, u::AbstractArray) where T =
     T(0.5) * (u[i+1, j, k] + u[i, j, k])
 
-▶y_aca(i, j, k, grid::Grid{T}, v::AbstractArray) where T = 
+▶y_aca(i, j, k, grid::Grid{T}, v::AbstractArray) where T =
     T(0.5) * (v[i, j+1, k] + v[i, j, k])
 
 function ▶z_aac(i, j, k, grid::Grid{T}, w::AbstractArray) where T
@@ -19,10 +19,10 @@ function ▶z_aac(i, j, k, grid::Grid{T}, w::AbstractArray) where T
     end
 end
 
-▶x_faa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T = 
+▶x_faa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T =
     T(0.5) * (ϕ[i, j, k] + ϕ[i-1, j, k])
 
-▶y_afa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T = 
+▶y_afa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T =
     T(0.5) * (ϕ[i, j, k] + ϕ[i, j-1, k])
 
 function ▶z_aaf(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T
@@ -76,7 +76,7 @@ function *(u::FaceFieldX, ϕ::CellField)
     for k = 1:u.grid.Nz, j = 1:u.grid.Ny, i = 1:u.grid.Nx
         @inbounds uϕdata[i, j, k] = ▶x_caa(i, j, k, u.grid, u.data) * ϕ[i, j, k]
     end
-    
+
     return CellField(uϕdata, ϕ.grid)
 end
 
@@ -86,25 +86,25 @@ function *(v::FaceFieldY, ϕ::CellField)
     for k = 1:v.grid.Nz, j = 1:v.grid.Ny, i = 1:v.grid.Nx
         @inbounds vϕdata[i, j, k] = ▶y_aca(i, j, k, v.grid, v.data) * ϕ[i, j, k]
     end
-    
+
     return CellField(vϕdata, ϕ.grid)
 end
 
 function *(w::FaceFieldZ, ϕ::CellField)
-    wϕdata = zeros(size(data(w))...)
+    wϕ = CellField(CPU(), ϕ.grid)
 
     for k = 1:w.grid.Nz, j = 1:w.grid.Ny, i = 1:w.grid.Nx
-        @inbounds wϕdata[i, j, k] = ▶z_aac(i, j, k, w.grid, w.data) * ϕ[i, j, k]
+        @inbounds wϕ[i, j, k] = ▶z_aac(i, j, k, w.grid, w.data) * ϕ[i, j, k]
     end
-    
-    return CellField(wϕdata, ϕ.grid)
+
+    return wϕ
 end
 
 Base.@propagate_inbounds pow2(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
 function kinetic_energy(u, v, w)
 
-    edata = zeros(size(u)...)
+    edata = zeros(CPU(), u.grid)
 
     for k = 1:u.grid.Nz, j = 1:u.grid.Ny, i = 1:u.grid.Nx
         @inbounds edata[i, j, k] = 0.5 * (
@@ -117,7 +117,10 @@ function kinetic_energy(u, v, w)
     return CellField(edata, u.grid)
 end
 
-function turbulent_kinetic_energy(model)
-    u′, v′, w′ = fluctuations(model.velocities.u, model.velocities.v, model.velocities.w)
+function turbulent_kinetic_energy(u, v, w)
+    u′, v′, w′ = fluctuations(u, v, w)
     return kinetic_energy(u′, v′, w′)
 end
+
+turbulent_kinetic_energy(model) =
+    turbulent_kinetic_energy(model.velocities.u, model.velocities.v, model.velocities.w)
