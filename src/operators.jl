@@ -3,35 +3,7 @@ using
     Oceananigans.Operators,
     Oceananigans.TurbulenceClosures
 
-import Oceananigans.TurbulenceClosures: ▶x_caa, ▶y_aca, ▶z_aac, ▶x_faa, ▶y_afa, ▶z_aaf
-
-▶x_caa(i, j, k, grid::Grid{T}, u::AbstractArray) where T =
-    T(0.5) * (u[i+1, j, k] + u[i, j, k])
-
-▶y_aca(i, j, k, grid::Grid{T}, v::AbstractArray) where T =
-    T(0.5) * (v[i, j+1, k] + v[i, j, k])
-
-function ▶z_aac(i, j, k, grid::Grid{T}, w::AbstractArray) where T
-    if k == grid.Nz
-        return T(0.5) * w[i, j, k]
-    else
-        return T(0.5) * (w[i, j, k+1] + w[i, j, k])
-    end
-end
-
-▶x_faa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T =
-    T(0.5) * (ϕ[i, j, k] + ϕ[i-1, j, k])
-
-▶y_afa(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T =
-    T(0.5) * (ϕ[i, j, k] + ϕ[i, j-1, k])
-
-function ▶z_aaf(i, j, k, grid::Grid{T}, ϕ::AbstractArray) where T
-    if k == 1
-        return T(0.5) * ϕ[i, j, k]
-    else
-        return T(0.5) * (ϕ[i, j, k] + ϕ[i-1, j, k])
-    end
-end
+using Oceananigans.TurbulenceClosures: ▶x_caa, ▶y_aca, ▶z_aac, ▶x_faa, ▶y_afa, ▶z_aaf
 
 havg(ϕ) = mean(ϕ, dims=(1, 2))
 havg(ϕ::Field) = mean(data(ϕ), dims=(1, 2))
